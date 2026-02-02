@@ -388,8 +388,8 @@ Summary information about a captured request (used in list view).
 
 ```json
 {
-  "id": string,              // UUID v4
-  "timestamp": string,       // ISO 8601 timestamp (UTC)
+  "id": string,              // UUID v7
+  "timestamp": string,       // ISO 8601 timestamp (UTC with time offset)
   "method": string,          // HTTP method
   "path": string,            // Request path (without query string)
   "queryString": "string",   // Raw query string (empty if none, no leading "?")
@@ -405,8 +405,8 @@ Complete information about a captured request.
 
 ```json
 {
-  "id": string,              // UUID v4
-  "timestamp": string,       // ISO 8601 timestamp (UTC)
+  "id": string,              // UUID v7
+  "timestamp": string,       // ISO 8601 timestamp (UTC with time offset)
   "method": string,          // HTTP method
   "path": string,            // Request path (without query string)
   "queryString": string,     // Raw query string (empty if none, no leading "?")
