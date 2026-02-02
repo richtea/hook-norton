@@ -1,7 +1,7 @@
 # HookNorton Developer API Specification
 
 **Version:** 1.0  
-**Base URL:** `http://localhost:8080` (HTTP) or `https://localhost:8081` (HTTPS)  
+**Base URL:** `http://localhost:8080/$$/api` (HTTP) or `https://localhost:8081/$$/api` (HTTPS)  
 **Format:** JSON
 
 ## Overview
@@ -31,7 +31,7 @@ The Developer API provides management and inspection capabilities for the HookNo
 
 ### List All Routes
 
-**GET** `/api/routes`
+**GET** `/$$/api/routes`
 
 Retrieves all configured routes.
 
@@ -73,7 +73,7 @@ Retrieves all configured routes.
 
 ### Get Specific Route
 
-**GET** `/api/routes/{method}/{urlEncodedPath}`
+**GET** `/$$/api/routes/{method}/{urlEncodedPath}`
 
 Retrieves configuration for a specific route identified by HTTP method and URL-encoded path pattern.
 
@@ -82,7 +82,7 @@ Retrieves configuration for a specific route identified by HTTP method and URL-e
 - `method` - HTTP method (GET, POST, PUT, PATCH, DELETE, etc.)
 - `urlEncodedPath` - URL-encoded path pattern
 
-**Example:** `/api/routes/GET/%2Fapi%2Fusers%2F%2A`  
+**Example:** `/$$/api/routes/GET/%2Fapi%2Fusers%2F%2A`  
 (retrieves the GET route for `/api/users/*`)
 
 **Response:** `200 OK`
@@ -109,7 +109,8 @@ Retrieves configuration for a specific route identified by HTTP method and URL-e
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
   "title": "Not Found",
   "status": 404,
-  "detail": "No route configured for GET /api/users/*"
+  "detail": "No route configured for GET /api/users/*",
+  "instance": "/$$/api/routes/GET/%2Fapi%2Fusers%2F%2A"
 }
 ```
 
@@ -117,7 +118,7 @@ Retrieves configuration for a specific route identified by HTTP method and URL-e
 
 ### Create or Update Route
 
-**PUT** `/api/routes/{method}/{urlEncodedPath}`
+**PUT** `/$$/api/routes/{method}/{urlEncodedPath}`
 
 Creates a new route or replaces an existing route configuration. Changes are automatically persisted to disk.
 
@@ -177,7 +178,7 @@ Creates a new route or replaces an existing route configuration. Changes are aut
 
 ### Delete Route
 
-**DELETE** `/api/routes/{method}/{urlEncodedPath}`
+**DELETE** `/$$/api/routes/{method}/{urlEncodedPath}`
 
 Deletes a specific route. Changes are automatically persisted to disk.
 
@@ -186,7 +187,7 @@ Deletes a specific route. Changes are automatically persisted to disk.
 - `method` - HTTP method
 - `urlEncodedPath` - URL-encoded path pattern
 
-**Example:** `/api/routes/DELETE/%2Fapi%2Fusers%2F%2A`  
+**Example:** `/$$/api/routes/DELETE/%2Fapi%2Fusers%2F%2A`  
 (deletes the DELETE route for `/api/users/*`)
 
 **Response:** `204 No Content`
@@ -198,7 +199,8 @@ Deletes a specific route. Changes are automatically persisted to disk.
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
   "title": "Not Found",
   "status": 404,
-  "detail": "No route configured for DELETE /api/users/*"
+  "detail": "No route configured for DELETE /api/users/*",
+  "instance": "/$$/api/routes/DELETE/%2Fapi%2Fusers%2F%2A"
 }
 ```
 
@@ -206,7 +208,7 @@ Deletes a specific route. Changes are automatically persisted to disk.
 
 ### Clear All Routes
 
-**DELETE** `/api/routes`
+**DELETE** `/$$/api/routes`
 
 Clears all route configurations and resets to empty state. Changes are automatically persisted to disk.
 
@@ -220,7 +222,7 @@ Clears all route configurations and resets to empty state. Changes are automatic
 
 ### List All Requests
 
-**GET** `/api/requests`
+**GET** `/$$/api/requests`
 
 Retrieves a summary list of all captured requests. Returns requests in reverse chronological order (newest first).
 
@@ -265,7 +267,7 @@ Retrieves a summary list of all captured requests. Returns requests in reverse c
 
 ### Get Request Details
 
-**GET** `/api/requests/{id}`
+**GET** `/$$/api/requests/{id}`
 
 Retrieves complete details for a specific captured request.
 
@@ -273,7 +275,7 @@ Retrieves complete details for a specific captured request.
 
 - `id` - UUID of the request
 
-**Example:** `/api/requests/550e8400-e29b-41d4-a716-446655440000`
+**Example:** `/$$/api/requests/550e8400-e29b-41d4-a716-446655440000`
 
 **Response:** `200 OK`
 
@@ -309,7 +311,7 @@ Retrieves complete details for a specific captured request.
   "title": "Not Found",
   "status": 404,
   "detail": "No request found with ID 550e8400-e29b-41d4-a716-446655440000",
-  "instance": "/api/requests/550e8400-e29b-41d4-a716-446655440000"
+  "instance": "/$$/api/requests/550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
@@ -317,7 +319,7 @@ Retrieves complete details for a specific captured request.
 
 ### Clear Request History
 
-**DELETE** `/api/requests`
+**DELETE** `/$$/api/requests`
 
 Removes all captured requests from history. Persisted history is also cleared.
 
@@ -331,7 +333,7 @@ Removes all captured requests from history. Persisted history is also cleared.
 
 ### Health Check
 
-**GET** `/health`
+**GET** `/$$/api/health`
 
 Returns the health status of the service.
 
@@ -466,7 +468,7 @@ All error responses conform to [RFC 9457 Problem Details for HTTP APIs](https://
   "title": "One or more validation errors occurred.",
   "status": 422,
   "detail": "Response statusCode must be between 100 and 599",
-  "instance": "/api/routes/POST/%2Fapi%2Fwebhooks"
+  "instance": "/$$/api/routes/POST/%2Fapi%2Fwebhooks"
 }
 ```
 
@@ -478,7 +480,7 @@ All error responses conform to [RFC 9457 Problem Details for HTTP APIs](https://
   "title": "One or more validation errors occurred.",
   "status": 422,
   "detail": "HTTP method must be one of: GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS",
-  "instance": "/api/routes/INVALID/%2Fapi%2Fusers"
+  "instance": "/$$/api/routes/INVALID/%2Fapi%2Fusers"
 }
 ```
 
@@ -490,7 +492,7 @@ All error responses conform to [RFC 9457 Problem Details for HTTP APIs](https://
   "title": "One or more validation errors occurred.",
   "status": 422,
   "detail": "Response configuration is required",
-  "instance": "/api/routes/GET/%2Fapi%2Fusers"
+  "instance": "/$$/api/routes/GET/%2Fapi%2Fusers"
 }
 ```
 
@@ -502,7 +504,7 @@ All error responses conform to [RFC 9457 Problem Details for HTTP APIs](https://
   "title": "Not Found",
   "status": 404,
   "detail": "No route configured for GET /api/users/*",
-  "instance": "/api/routes/GET/%2Fapi%2Fusers%2F%2A"
+  "instance": "/$$/api/routes/GET/%2Fapi%2Fusers%2F%2A"
 }
 ```
 
@@ -514,7 +516,7 @@ All error responses conform to [RFC 9457 Problem Details for HTTP APIs](https://
   "title": "Not Found",
   "status": 404,
   "detail": "No request found with ID 550e8400-e29b-41d4-a716-446655440000",
-  "instance": "/api/requests/550e8400-e29b-41d4-a716-446655440000"
+  "instance": "/$$/api/requests/550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
@@ -539,12 +541,12 @@ The problem type URIs should link to the corresponding section of RFC9110 as in 
 
 Since route paths may contain special characters (including wildcards), they must be URL-encoded when used in API endpoints.
 
-| Original Path      | URL-Encoded Path            | Full Endpoint Example                       |
-| ------------------ | --------------------------- | ------------------------------------------- |
-| `/api/users`       | `%2Fapi%2Fusers`            | `/api/routes/GET/%2Fapi%2Fusers`            |
-| `/api/users/*`     | `%2Fapi%2Fusers%2F%2A`      | `/api/routes/GET/%2Fapi%2Fusers%2F%2A`      |
-| `/webhooks/github` | `%2Fwebhooks%2Fgithub`      | `/api/routes/POST/%2Fwebhooks%2Fgithub`     |
-| `/api/*/status`    | `%2Fapi%2F%2A%2Fstatus`     | `/api/routes/GET/%2Fapi%2F%2A%2Fstatus`     |
+| Original Path      | URL-Encoded Path            | Full Endpoint Example                              |
+| ------------------ | --------------------------- | -------------------------------------------------- |
+| `/api/users`       | `%2Fapi%2Fusers`            | `/$$/api/routes/GET/%2Fapi%2Fusers`            |
+| `/api/users/*`     | `%2Fapi%2Fusers%2F%2A`      | `/$$/api/routes/GET/%2Fapi%2Fusers%2F%2A`      |
+| `/webhooks/github` | `%2Fwebhooks%2Fgithub`      | `/$$/api/routes/POST/%2Fwebhooks%2Fgithub`     |
+| `/api/*/status`    | `%2Fapi%2F%2A%2Fstatus`     | `/$$/api/routes/GET/%2Fapi%2F%2A%2Fstatus`     |
 
 **Note:** Most HTTP clients and programming languages provide built-in URL encoding functions:
 

@@ -65,13 +65,13 @@ Request history characteristics:
 
 ## 4. API Surface
 
-HookNorton is exposed via 3 groups of endpoints: the Developer API, the Fake API, and the Web UI. The Developer API and
-the Web UI are exposed on container port 8080 (HTTP) and 8081 (HTTPS). The Fake API is exposed on container ports 8180
-(HTTP) and 8181 (HTTPS).
+HookNorton is exposed via 3 groups of endpoints: the Developer API, the Fake API, and the Web UI. All endpoints are exposed on container ports 8080 (HTTP) and 8081 (HTTPS).
+
+The Developer API is served at base path `/$$/api`, the Web UI is served from `/$$/web`, and the Fake API handles all other paths.
 
 ### 4.1 Developer API
 
-Used by the UI and external automation.
+Used by the UI and external automation. Served at base path `/$$/api`.
 
 Configuration endpoints
 
@@ -94,7 +94,7 @@ All endpoints are RESTful, JSON-based.
 
 ### 4.2 Fake API
 
-* Catch-all HTTP handler
+* Catch-all HTTP handler for all paths except `/$$/api/*` and `/$$/web/*`
 * Accepts all HTTP methods
 * Matches requests against configured routes
 * Records every request before responding
@@ -104,7 +104,7 @@ No artificial latency or dynamic response logic.
 
 ### 4.3 Web UI
 
-React single-page application for manual inspection only:
+React single-page application served from `/$$/web` for manual inspection only:
 
 * View request history (latest N)
 * Inspect request details (headers, raw body, parsed JSON view)
