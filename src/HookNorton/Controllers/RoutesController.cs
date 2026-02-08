@@ -2,6 +2,7 @@ using System.Net.Mime;
 using HookNorton.Models;
 using HookNorton.Services;
 using Microsoft.AspNetCore.Mvc;
+using ILogger = Serilog.ILogger;
 
 namespace HookNorton.Controllers;
 
@@ -10,14 +11,14 @@ namespace HookNorton.Controllers;
 public class RoutesController : ControllerBase
 {
     private readonly RouteConfigStore _routeStore;
-    private readonly ILogger<RoutesController> _logger;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RoutesController"/> class.
     /// </summary>
     /// <param name="routeStore">The route configuration store.</param>
     /// <param name="logger">The logger.</param>
-    public RoutesController(RouteConfigStore routeStore, ILogger<RoutesController> logger)
+    public RoutesController(RouteConfigStore routeStore, ILogger logger)
     {
         _routeStore = routeStore;
         _logger = logger;

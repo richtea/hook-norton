@@ -1,5 +1,6 @@
 using HookNorton.Startup;
 using Microsoft.Extensions.Options;
+using ILogger = Serilog.ILogger;
 
 namespace HookNorton.Services;
 
@@ -11,7 +12,7 @@ public class RequestHistoryCleanupService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly HookNortonOptions _options;
-    private readonly ILogger<RequestHistoryCleanupService> _logger;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestHistoryCleanupService"/> class.
@@ -22,7 +23,7 @@ public class RequestHistoryCleanupService : BackgroundService
     public RequestHistoryCleanupService(
         IServiceScopeFactory scopeFactory,
         IOptions<HookNortonOptions> options,
-        ILogger<RequestHistoryCleanupService> logger)
+        ILogger logger)
     {
         _scopeFactory = scopeFactory;
         _options = options.Value;
@@ -32,7 +33,7 @@ public class RequestHistoryCleanupService : BackgroundService
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation(
+        _logger.Information(
             "Request history cleanup service started with interval of {Interval} seconds",
             _options.CleanupIntervalSeconds);
 
@@ -53,11 +54,11 @@ public class RequestHistoryCleanupService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during request history cleanup");
+                _logger.Error(ex, "Error during request history cleanup");
             }
         }
 
-        _logger.LogInformation("Request history cleanup service stopped");
+        _logger.Information("Request history cleanup service stopped");
     }
 
     private async Task CleanupStaleFilesAsync(CancellationToken cancellationToken)

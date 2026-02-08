@@ -5,6 +5,7 @@ using HookNorton.Startup;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
+using ILogger = Serilog.ILogger;
 
 namespace HookNorton.Services;
 
@@ -19,7 +20,7 @@ public class RouteConfigPersistenceService : BackgroundService
 
     private readonly IFileSystem _fileSystem;
 
-    private readonly ILogger<RouteConfigPersistenceService> _logger;
+    private readonly ILogger _logger;
 
     private readonly SemaphoreSlim _saveSemaphore = new(1, 1);
 
@@ -44,7 +45,7 @@ public class RouteConfigPersistenceService : BackgroundService
         IOptions<HookNortonOptions> options,
         IFileSystem fileSystem,
         IOptions<JsonOptions> jsonOptions,
-        ILogger<RouteConfigPersistenceService> logger)
+        ILogger logger)
     {
         _routeStore = routeStore;
         _options = options.Value;
@@ -67,7 +68,7 @@ public class RouteConfigPersistenceService : BackgroundService
         {
             if (!_fileSystem.File.Exists(optionsRouteConfigPath))
             {
-                _logger.LogInformation(
+                _logger.Information(
                     "No route configuration file found at {Path}, starting with empty configuration",
                     optionsRouteConfigPath);
                 return;
@@ -80,7 +81,7 @@ public class RouteConfigPersistenceService : BackgroundService
             if (data?.Routes != null)
             {
                 _routeStore.LoadRoutes(data.Routes);
-                _logger.LogInformation(
+                _logger.Information(
                     "Loaded {Count} routes from {Path}",
                     data.Routes.Count,
                     optionsRouteConfigPath);
@@ -88,7 +89,7 @@ public class RouteConfigPersistenceService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(
+            _logger.Warning(
                 ex,
                 "Failed to load route configuration from {Path}, starting with empty configuration",
                 optionsRouteConfigPath);
@@ -106,7 +107,7 @@ public class RouteConfigPersistenceService : BackgroundService
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Route config persistence service started");
+        _logger.Information("Route config persistence service started");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -134,7 +135,7 @@ public class RouteConfigPersistenceService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in route config persistence service");
+                _logger.Error(ex, "Error in route config persistence service");
             }
         }
 
@@ -144,7 +145,7 @@ public class RouteConfigPersistenceService : BackgroundService
             await SaveRoutesAsync(CancellationToken.None);
         }
 
-        _logger.LogInformation("Route config persistence service stopped");
+        _logger.Information("Route config persistence service stopped");
     }
 
     private void OnRoutesChanged()
@@ -186,11 +187,11 @@ public class RouteConfigPersistenceService : BackgroundService
                 _hasPendingChanges = false;
             }
 
-            _logger.LogDebug("Saved {Count} routes to {Path}", routes.Count, _options.RouteConfigPath);
+            _logger.Debug("Saved {Count} routes to {Path}", routes.Count, _options.RouteConfigPath);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save route configuration to {Path}", _options.RouteConfigPath);
+            _logger.Error(ex, "Failed to save route configuration to {Path}", _options.RouteConfigPath);
         }
         finally
         {

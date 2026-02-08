@@ -2,6 +2,8 @@ using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using HookNorton.Startup;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Serilog;
+using Serilog.Events;
 
 namespace HookNorton.Integration.Tests.Infrastructure;
 
@@ -25,6 +27,12 @@ public sealed class IntegrationTestHost : IDisposable
     {
         var fileSystem = new MockFileSystem();
         seed?.Invoke(fileSystem);
+
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .WriteTo.Console()
+            .CreateLogger();
 
         var factory = new TestWebApplicationFactory(fileSystem);
         return new IntegrationTestHost(fileSystem, factory);

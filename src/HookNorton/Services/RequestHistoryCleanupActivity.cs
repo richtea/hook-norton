@@ -1,5 +1,6 @@
 using HookNorton.Startup;
 using Microsoft.Extensions.Options;
+using ILogger = Serilog.ILogger;
 
 namespace HookNorton.Services;
 
@@ -12,7 +13,7 @@ public sealed class RequestHistoryCleanupActivity
     private readonly PersistenceService _persistence;
     private readonly RequestRecorder _recorder;
     private readonly HookNortonOptions _options;
-    private readonly ILogger<RequestHistoryCleanupActivity> _logger;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestHistoryCleanupActivity"/> class.
@@ -25,7 +26,7 @@ public sealed class RequestHistoryCleanupActivity
         PersistenceService persistence,
         RequestRecorder recorder,
         IOptions<HookNortonOptions> options,
-        ILogger<RequestHistoryCleanupActivity> logger)
+        ILogger logger)
     {
         _persistence = persistence;
         _recorder = recorder;
@@ -62,7 +63,7 @@ public sealed class RequestHistoryCleanupActivity
 
             if (filesToDelete.Count > 0)
             {
-                _logger.LogDebug(
+                _logger.Debug(
                     "Cleaning up {Count} stale request files (keeping {KeepCount} IDs tracked in memory)",
                     filesToDelete.Count,
                     idsToKeep.Count);
@@ -81,7 +82,7 @@ public sealed class RequestHistoryCleanupActivity
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to cleanup stale request files");
+            _logger.Warning(ex, "Failed to cleanup stale request files");
         }
 
         return Task.CompletedTask;

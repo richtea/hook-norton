@@ -1,6 +1,7 @@
 using HookNorton.Models;
 using HookNorton.Services;
 using Microsoft.AspNetCore.Mvc;
+using ILogger = Serilog.ILogger;
 
 namespace HookNorton.Controllers;
 
@@ -14,7 +15,7 @@ public class RequestsController : ControllerBase
 {
     private readonly RequestRecorder _recorder;
     private readonly PersistenceService _persistence;
-    private readonly ILogger<RequestsController> _logger;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestsController"/> class.
@@ -25,7 +26,7 @@ public class RequestsController : ControllerBase
     public RequestsController(
         RequestRecorder recorder,
         PersistenceService persistence,
-        ILogger<RequestsController> logger)
+        ILogger logger)
     {
         _recorder = recorder;
         _persistence = persistence;

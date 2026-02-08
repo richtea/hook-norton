@@ -4,6 +4,7 @@ using HookNorton.Common;
 using HookNorton.Models;
 using HookNorton.Startup;
 using Microsoft.Extensions.Options;
+using ILogger = Serilog.ILogger;
 
 namespace HookNorton.Services;
 
@@ -17,7 +18,7 @@ public class PersistenceService
 
     private readonly IFileSystem _fileSystem;
 
-    private readonly ILogger<PersistenceService> _logger;
+    private readonly ILogger _logger;
 
     private readonly JsonSerializerOptions _jsonOptions;
 
@@ -30,7 +31,7 @@ public class PersistenceService
     public PersistenceService(
         IOptions<HookNortonOptions> options,
         IFileSystem fileSystem,
-        ILogger<PersistenceService> logger)
+        ILogger logger)
     {
         _options = options.Value;
         _fileSystem = fileSystem;
@@ -74,12 +75,12 @@ public class PersistenceService
             _fileSystem.Path.Combine(_options.RequestHistoryPath, $"{request.Id}.json")))
         {
             // File already exists (duplicate UUID - should be extremely rare)
-            _logger.LogWarning(ex, "Request file already exists for ID {RequestId}", request.Id);
+            _logger.Warning(ex, "Request file already exists for ID {RequestId}", request.Id);
             return Result.Success(); // Gracefully handle duplicate
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save request {RequestId}", request.Id);
+            _logger.Error(ex, "Failed to save request {RequestId}", request.Id);
             return Errors.Requests.PersistenceFailed(request.Id, ex.Message);
         }
     }
@@ -119,7 +120,7 @@ public class PersistenceService
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to load request from {FilePath}", file);
+                    _logger.Warning(ex, "Failed to load request from {FilePath}", file);
 
                     // Continue loading other files
                 }
@@ -129,7 +130,7 @@ public class PersistenceService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to load requests from {Path}", _options.RequestHistoryPath);
+            _logger.Error(ex, "Failed to load requests from {Path}", _options.RequestHistoryPath);
             return Errors.Persistence.LoadFailed(_options.RequestHistoryPath, ex.Message);
         }
     }
@@ -153,7 +154,7 @@ public class PersistenceService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to delete request file {RequestId}", id);
+            _logger.Warning(ex, "Failed to delete request file {RequestId}", id);
             return Result.Success(); // Don't fail on delete errors
         }
     }
@@ -177,7 +178,7 @@ public class PersistenceService
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Failed to delete file {FilePath}", file);
+                        _logger.Warning(ex, "Failed to delete file {FilePath}", file);
                     }
                 }
             }
@@ -186,7 +187,7 @@ public class PersistenceService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to clear request history");
+            _logger.Error(ex, "Failed to clear request history");
             return Errors.Persistence.SaveFailed(_options.RequestHistoryPath, ex.Message);
         }
     }
@@ -213,7 +214,7 @@ public class PersistenceService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to get request file IDs");
+            _logger.Warning(ex, "Failed to get request file IDs");
             return Array.Empty<string>();
         }
     }

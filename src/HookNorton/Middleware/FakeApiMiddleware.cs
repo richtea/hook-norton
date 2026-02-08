@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text;
 using HookNorton.Services;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using ILogger = Serilog.ILogger;
 
 namespace HookNorton.Middleware;
 
@@ -11,7 +12,7 @@ namespace HookNorton.Middleware;
 /// </summary>
 public class FakeApiMiddleware
 {
-    private readonly ILogger<FakeApiMiddleware> _logger;
+    private readonly ILogger _logger;
 
     private readonly RequestDelegate _next;
 
@@ -23,7 +24,7 @@ public class FakeApiMiddleware
     /// <param name="next">The next middleware in the pipeline.</param>
     /// <param name="problemDetailsFactory">The problem details factory.</param>
     /// <param name="logger">The logger.</param>
-    public FakeApiMiddleware(RequestDelegate next, ProblemDetailsFactory problemDetailsFactory, ILogger<FakeApiMiddleware> logger)
+    public FakeApiMiddleware(RequestDelegate next, ProblemDetailsFactory problemDetailsFactory, ILogger logger)
     {
         _next = next;
         _problemDetailsFactory = problemDetailsFactory;
@@ -67,7 +68,7 @@ public class FakeApiMiddleware
         if (matchResult.IsSuccess)
         {
             var route = matchResult.Value;
-            _logger.LogDebug(
+            _logger.Debug(
                 "Matched request {Method} {Path} to route {RouteMethod} {RoutePattern}",
                 context.Request.Method,
                 path,
@@ -90,7 +91,7 @@ public class FakeApiMiddleware
         else
         {
             // No route matched - return 404 with RFC 9457 Problem Details
-            _logger.LogDebug("No route matched for {Method} {Path}", context.Request.Method, path);
+            _logger.Debug("No route matched for {Method} {Path}", context.Request.Method, path);
 
             context.Response.StatusCode = 404;
             context.Response.ContentType = MediaTypeNames.Application.ProblemJson;
@@ -153,7 +154,7 @@ public class FakeApiMiddleware
                     var saveResult = persistence.SaveRequest(recordResult.Value);
                     if (saveResult.IsFailure)
                     {
-                        _logger.LogWarning(
+                        _logger.Warning(
                             "Failed to persist request {RequestId}: {Error}",
                             recordResult.Value.Id,
                             saveResult.Error.Message);
@@ -163,11 +164,11 @@ public class FakeApiMiddleware
                 return;
             }
 
-            _logger.LogWarning("Failed to record request: {Error}", recordResult.Error.Message);
+            _logger.Warning("Failed to record request: {Error}", recordResult.Error.Message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error recording request");
+            _logger.Error(ex, "Error recording request");
         }
     }
 }

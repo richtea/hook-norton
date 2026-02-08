@@ -17,6 +17,8 @@ public static class CompositionRoot
     /// <param name="configuration">The application configuration.</param>
     public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddAsyncInitializer<InitialDataInitializer>();
+
         // Add configuration
         services.Configure<HookNortonOptions>(
             configuration.GetSection(HookNortonOptions.SectionName));
