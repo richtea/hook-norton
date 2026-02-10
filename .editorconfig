@@ -410,6 +410,9 @@ dotnet_diagnostic.SA1600.severity = none
 # Temporary suppression until https://github.com/dotnet/sdk/issues/51716 is resolved
 dotnet_diagnostic.CA1708.severity = none
 
+# ASPIRECERTIFICATES001: Method is for evaluation purposes only
+# It's only for development and testing, so we don't want to mark it as an error or warning
+dotnet_diagnostic.ASPIRECERTIFICATES001.severity = none
 
 [*Model.cs]
 # Documentation rules are modified for model classes because the documentation is intended for Swagger
