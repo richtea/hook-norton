@@ -1,0 +1,181 @@
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Trash2, Edit, Copy, Check } from 'lucide-react'
+import type { RouteConfiguration } from '@/types'
+import { testIds } from '@/lib/testIds'
+import { useState } from 'react'
+import { formatJSON, isValidJSON } from '@/lib/utils'
+
+interface RouteDetailsProps {
+  route: RouteConfiguration
+  onEdit: (route: RouteConfiguration) => void
+  onDelete: (route: RouteConfiguration) => void
+  loading?: boolean
+}
+
+export function RouteDetails({
+  route,
+  onEdit,
+  onDelete,
+  loading = false,
+}: RouteDetailsProps) {
+  const [copiedSection, setCopiedSection] = useState<string | null>(null)
+
+  const copyToClipboard = (text: string, section: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedSection(section)
+      setTimeout(() => setCopiedSection(null), 2000)
+    })
+  }
+
+  const getMethodBadgeClass = (method: string) => {
+    const baseColors = {
+      GET: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+      POST: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      PUT: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+      PATCH:
+        'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+      DELETE: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+      HEAD: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+      OPTIONS:
+        'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+    }
+    return baseColors[method as keyof typeof baseColors] || baseColors.GET
+  }
+
+  const formatBodyDisplay = (body: string) => {
+    if (!body) return '(empty)'
+    if (isValidJSON(body)) {
+      return formatJSON(body)
+    }
+    return body
+  }
+
+  return (
+    <div
+      className="flex h-full flex-col overflow-auto bg-background p-6 space-y-4"
+      data-testid={testIds.routeDetailsPanel}
+    >
+      {/* Header */}
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-2">
+              <Badge className={getMethodBadgeClass(route.method)}>
+                {route.method}
+              </Badge>
+              <Badge variant="outline">{route.enabled ? 'Enabled' : 'Disabled'}</Badge>
+            </div>
+            <h2 className="break-all text-xl font-semibold">{route.pathPattern}</h2>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit(route)}
+              className="gap-1"
+              data-testid={testIds.routeEditButton(route.method, route.pathPattern)}
+            >
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onDelete(route)}
+              disabled={loading}
+              className="gap-1"
+              data-testid={testIds.routeDeleteButton(route.method, route.pathPattern)}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <ScrollArea className="flex-1 pr-4">
+        <div className="space-y-6">
+          {/* Status Code */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Status Code</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-primary">
+                {route.response.statusCode}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Headers */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Headers</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    copyToClipboard(JSON.stringify(route.response.headers, null, 2), 'headers')
+                  }
+                  className="gap-1"
+                >
+                  {copiedSection === 'headers' ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(route.response.headers).length === 0 ? (
+                <p className="text-sm text-muted-foreground">(none)</p>
+              ) : (
+                <div className="space-y-2">
+                  {Object.entries(route.response.headers).map(([key, value]) => (
+                    <div key={key} className="space-y-1 rounded bg-muted p-2 text-sm">
+                      <p className="font-mono font-semibold text-xs">{key}</p>
+                      <p className="font-mono text-xs break-all">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Body */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Response Body</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    copyToClipboard(route.response.body, 'body')
+                  }
+                  className="gap-1"
+                >
+                  {copiedSection === 'body' ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <pre className="overflow-auto rounded bg-muted p-3 text-xs font-mono text-foreground max-h-[300px]">
+                {formatBodyDisplay(route.response.body)}
+              </pre>
+            </CardContent>
+          </Card>
+        </div>
+      </ScrollArea>
+    </div>
+  )
+}
