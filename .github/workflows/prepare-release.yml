@@ -31,16 +31,10 @@ jobs:
 
       - name: Generate token for creating PR (GitHub App)
         id: generate-token
-        if: secrets.RELEASEBOT_APP_ID != ''
         uses: tibdex/github-app-token@v2
         with:
           app_id: ${{ secrets.RELEASEBOT_APP_ID }}
           private_key: ${{ secrets.RELEASEBOT_PRIVATE_KEY }}
-
-      - name: Set token from PAT
-        id: pat-token
-        if: secrets.RELEASEBOT_APP_ID == ''
-        run: echo "token=${{ secrets.RELEASEBOT_PAT }}" >> $GITHUB_OUTPUT
 
       - name: Ensure autorelease label exists
         run: |
@@ -79,7 +73,7 @@ jobs:
 
             ${{ steps.update-changelog.outputs.release-notes }}
           labels: autorelease
-          token: ${{ steps.generate-token.outputs.token || steps.pat-token.outputs.token }}
+          token: ${{ steps.generate-token.outputs.token }}
 
       - name: Output summary
         run: |
