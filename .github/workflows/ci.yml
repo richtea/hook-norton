@@ -1,0 +1,66 @@
+name: CI build
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      create_container:
+        description: 'Build and push production container to GHCR'
+        type: boolean
+        default: false
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.set_build_version.outputs.build-version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get current version from changelog
+        id: get_current_version
+        uses: release-flow/keep-a-changelog-action@v3
+        with:
+          command: query
+          version: latest-or-unreleased
+
+      - name: Set base version
+        id: base_version
+        run: |
+          raw='${{ steps.get_current_version.outputs.version }}'
+          if [[ "$raw" == "[unreleased]" || -z "$raw" ]]; then
+            echo "version=0.0.0" >> $GITHUB_OUTPUT
+          else
+            echo "version=$raw" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get commit count since last release tag
+        id: commit_count
+        run: |
+          base='${{ steps.base_version.outputs.version }}'
+          tag="v${base}"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            count=$(git rev-list --count "${tag}..HEAD")
+          else
+            count=$(git rev-list --count HEAD)
+          fi
+          echo "count=$count" >> $GITHUB_OUTPUT
+
+      - name: Set build version number
+        id: set_build_version
+        run: |
+          base='${{ steps.base_version.outputs.version }}'
+          count='${{ steps.commit_count.outputs.count }}'
+          build_version="${base}-ci.${count}"
+          echo "build-version=$build_version" >> $GITHUB_OUTPUT
+
+  build:
+    needs: init
+    uses: ./.github/workflows/build-and-test.yml
+    with:
+      build-version: ${{ needs.init.outputs.build-version }}
+      create-container: ${{ github.event.inputs.create_container == 'true' }}

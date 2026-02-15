@@ -1,0 +1,151 @@
+name: Build and test
+
+on:
+  workflow_call:
+    inputs:
+      build-version:
+        required: true
+        type: string
+      create-container:
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      container-pushed:
+        description: Whether the container was built and pushed to GHCR
+        value: ${{ jobs.build.outputs.container-pushed }}
+  workflow_dispatch:
+    inputs:
+      build-version:
+        description: 'Build version (e.g. 1.0.0-ci.5 or 1.0.0)'
+        required: true
+        type: string
+      create-container:
+        description: 'Build and push production container to GHCR'
+        type: boolean
+        default: false
+
+env:
+  BUILD_VERSION: ${{ inputs.build-version || '0.0.0-ci.0' }}
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    outputs:
+      container-pushed: ${{ steps.container_output.outputs.pushed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore Faque.sln
+
+      - name: Build
+        run: dotnet build Faque.sln -c Release --no-restore
+
+      - name: Run unit tests
+        run: dotnet test tests/Faque.Tests/Faque.Tests.csproj -c Release --no-build
+
+      - name: Run integration tests
+        run: dotnet test tests/Faque.Integration.Tests/Faque.Integration.Tests.csproj -c Release --no-build
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: src/frontend
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: src/frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: src/frontend
+
+      - name: Install Aspire CLI and prepare container
+        if: ${{ inputs.create-container == true }}
+        id: prepare_container
+        run: |
+          curl -sSL https://aspire.dev/install.sh | bash
+          echo "$HOME/.aspire/bin" >> $GITHUB_PATH
+          echo "${HOME}/.aspire/bin" >> $GITHUB_PATH
+          echo "ASPIRE_PATH=$HOME/.aspire/bin" >> $GITHUB_ENV
+        env:
+          PATH: ${{ env.PATH }}:$HOME/.aspire/bin
+
+      - name: Prepare compose and build container
+        if: ${{ inputs.create-container == true }}
+        id: build_container
+        run: |
+          export PATH="$HOME/.aspire/bin:$PATH"
+          cd src/Faque.AppHost
+          aspire do prepare-compose --environment production
+          COMPOSE_FILE=$(find "$GITHUB_WORKSPACE/src/Faque.AppHost" -name 'docker-compose*.yml' 2>/dev/null | head -1)
+          if [[ -z "$COMPOSE_FILE" ]]; then
+            COMPOSE_FILE="$GITHUB_WORKSPACE/src/Faque.AppHost/aspire-output/docker-compose.yml"
+          fi
+          COMPOSE_DIR=$(dirname "$COMPOSE_FILE")
+          echo "compose-dir=$COMPOSE_DIR" >> $GITHUB_OUTPUT
+          echo "compose-file=$COMPOSE_FILE" >> $GITHUB_OUTPUT
+          docker compose -f "$COMPOSE_FILE" build
+        env:
+          PATH: ${{ env.PATH }}:$HOME/.aspire/bin
+
+      - name: Tag and push container to GHCR
+        if: ${{ inputs.create-container == true }}
+        id: push_container
+        run: |
+          COMPOSE_FILE='${{ steps.build_container.outputs.compose-file }}'
+          # Get the api service image name from compose (built image has this name)
+          IMAGE_NAME=$(docker compose -f "$COMPOSE_FILE" config 2>/dev/null | grep -A 20 "api:" | grep "image:" | head -1 | sed 's/.*image: *//' | tr -d ' "')
+          if [[ -z "$IMAGE_NAME" ]]; then
+            IMAGE_NAME=$(grep -E '^  api:' -A 50 "$COMPOSE_FILE" | grep 'image:' | head -1 | sed 's/.*image: *//' | tr -d ' "')
+          fi
+          if [[ -z "$IMAGE_NAME" ]]; then
+            IMAGE_NAME=$(docker compose -f "$COMPOSE_FILE" images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | head -1)
+          fi
+          if [[ -z "$IMAGE_NAME" ]]; then
+            IMAGE_NAME=$(docker images --format "{{.Repository}}:{{.Tag}}" --filter "dangling=false" | head -1)
+          fi
+          GHCR_IMAGE="ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ env.BUILD_VERSION }}"
+          docker tag "$IMAGE_NAME" "$GHCR_IMAGE"
+          echo "image=$GHCR_IMAGE" >> $GITHUB_OUTPUT
+        env:
+          BUILD_VERSION: ${{ env.BUILD_VERSION }}
+
+      - name: Log in to GHCR and push
+        if: ${{ inputs.create-container == true }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push container image to GHCR
+        if: ${{ inputs.create-container == true }}
+        run: |
+          docker push ${{ steps.push_container.outputs.image }}
+        env:
+          BUILD_VERSION: ${{ env.BUILD_VERSION }}
+
+      - name: Set container output
+        id: container_output
+        run: |
+          if [[ "${{ inputs.create-container }}" == "true" ]]; then
+            echo "pushed=true" >> $GITHUB_OUTPUT
+          else
+            echo "pushed=false" >> $GITHUB_OUTPUT
+          fi

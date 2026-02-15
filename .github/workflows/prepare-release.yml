@@ -1,0 +1,86 @@
+name: '[autorelease] Prepare release PR'
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-type:
+        description: 'Release type'
+        type: choice
+        required: true
+        options:
+          - major
+          - minor
+          - patch
+          - premajor
+          - preminor
+          - prepatch
+          - prerelease
+        default: patch
+      prerelease-identifier:
+        description: 'Pre-release identifier (required for pre-release builds)'
+        required: false
+
+jobs:
+  changelog:
+    name: Update changelog and create PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Generate token for creating PR (GitHub App)
+        id: generate-token
+        if: secrets.RELEASEBOT_APP_ID != ''
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.RELEASEBOT_APP_ID }}
+          private_key: ${{ secrets.RELEASEBOT_PRIVATE_KEY }}
+
+      - name: Set token from PAT
+        id: pat-token
+        if: secrets.RELEASEBOT_APP_ID == ''
+        run: echo "token=${{ secrets.RELEASEBOT_PAT }}" >> $GITHUB_OUTPUT
+
+      - name: Ensure autorelease label exists
+        run: |
+          LABEL=$(gh api repos/$GITHUB_REPOSITORY/labels --jq '.[] | select(.name=="autorelease")' 2>/dev/null || true)
+          if [[ -z "$LABEL" ]]; then
+            echo "Creating 'autorelease' label"
+            gh api --silent repos/$GITHUB_REPOSITORY/labels -f name="autorelease" -f color="baa938" -f description="This is an automatically-created PR to trigger a release"
+          else
+            echo "'autorelease' label exists"
+          fi
+
+      - name: Update changelog
+        id: update-changelog
+        uses: release-flow/keep-a-changelog-action@v3
+        with:
+          command: bump
+          version: ${{ github.event.inputs.release-type }}
+          preid: ${{ github.event.inputs.prerelease-identifier }}
+
+      - name: Create Pull Request
+        id: create-release-pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore: Update changelog for release ${{ steps.update-changelog.outputs.version }}'
+          committer: 'releasebot <noreply@github.com>'
+          branch: 'autorelease/${{ steps.update-changelog.outputs.version }}'
+          title: '[autorelease] Release ${{ steps.update-changelog.outputs.version }}'
+          body: |
+            **This PR was created automatically by the releasebot**
+
+            **:warning: Approving this PR will trigger a workflow that generates a draft release. You need to publish this release when you are happy with it.**
+
+            The changes in this PR prepare for release ${{ steps.update-changelog.outputs.version }}. The release notes are:
+
+            ---
+
+            ${{ steps.update-changelog.outputs.release-notes }}
+          labels: autorelease
+          token: ${{ steps.generate-token.outputs.token || steps.pat-token.outputs.token }}
+
+      - name: Output summary
+        run: |
+          echo "::notice title=Release PR Prepared::A release PR has been created, please merge it to continue with the release process: ${{ steps.create-release-pr.outputs.pull-request-url }}"
