@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import { useRoutes } from '@/api/hooks'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -57,11 +57,14 @@ export function RoutesList({
     return () => clearInterval(interval)
   }, [lastUpdated])
 
-  // Update lastUpdated when data changes
+  const syncLastUpdated = useEffectEvent(() => {
+    setLastUpdated(new Date())
+    setSecondsAgo(0)
+  })
+
   useEffect(() => {
     if (data) {
-      setLastUpdated(new Date())
-      setSecondsAgo(0)
+      syncLastUpdated()
     }
   }, [data])
 

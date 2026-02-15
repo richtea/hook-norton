@@ -6,13 +6,13 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { ErrorAlert } from '@/components/common/ErrorAlert'
 import { Button } from '@/components/ui/button'
 import { Trash2 } from 'lucide-react'
-import type { RequestSummary } from '@/types'
+import type { RequestRecord, RequestSummary } from '@/types'
 import { testIds } from '@/lib/testIds'
 import { apiClient } from '@/api/client'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 
 export function RequestsPage() {
-  const [selectedRequest, setSelectedRequest] = useState<any>(undefined)
+  const [selectedRequest, setSelectedRequest] = useState<RequestRecord | undefined>(undefined)
   const [selectedSummary, setSelectedSummary] = useState<RequestSummary | undefined>(undefined)
   const [confirmClearAll, setConfirmClearAll] = useState(false)
   const [error, setError] = useState<string | null>(null)
