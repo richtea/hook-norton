@@ -59,6 +59,7 @@ jobs:
           echo "build-version=$build_version" >> $GITHUB_OUTPUT
 
   build:
+    name: ci-build
     needs: init
     uses: ./.github/workflows/build-and-test.yml
     with:

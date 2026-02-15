@@ -34,6 +34,15 @@ interface RouteFormProps {
   onCancel?: () => void
 }
 
+interface RouteFormValues {
+  method: string
+  pathPattern: string
+  statusCode: number
+  headers: Record<string, string>
+  body: string
+  enabled: boolean
+}
+
 export function RouteForm({
   onSubmit,
   initialMethod = 'GET',
@@ -45,7 +54,7 @@ export function RouteForm({
 }: RouteFormProps) {
   const [internalError, setInternalError] = useState<string | null>(null)
 
-  const { control, handleSubmit } = useForm({
+  const { control, handleSubmit } = useForm<RouteFormValues>({
     defaultValues: {
       method: initialData?.method || initialMethod,
       pathPattern: initialData?.pathPattern || initialPath,
@@ -56,7 +65,7 @@ export function RouteForm({
     },
   })
 
-  const onFormSubmit = async (formData: any) => {
+  const onFormSubmit = async (formData: RouteFormValues) => {
     try {
       setInternalError(null)
       await onSubmit({

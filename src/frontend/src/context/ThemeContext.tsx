@@ -1,36 +1,27 @@
-import { createContext, useContext, useEffect, useState } from 'react'
-
-type Theme = 'light' | 'dark'
-
-interface ThemeContextType {
-  theme: Theme
-  toggleTheme: () => void
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+import { useEffect, useState } from 'react'
+import { ThemeContext, type Theme } from './theme-context'
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light')
-  const [isMounted, setIsMounted] = useState(false)
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') {
+      return 'light'
+    }
 
-  useEffect(() => {
-    // Load theme from localStorage on mount
     const savedTheme = localStorage.getItem('app-theme') as Theme | null
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme
+    }
 
-    const initialTheme: Theme = savedTheme || (prefersDark ? 'dark' : 'light')
-    setTheme(initialTheme)
-    setIsMounted(true)
-  }, [])
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+  })
 
   useEffect(() => {
-    if (!isMounted) return
-
-    // Update DOM and localStorage
     const root = document.documentElement
     root.classList.toggle('dark', theme === 'dark')
     localStorage.setItem('app-theme', theme)
-  }, [theme, isMounted])
+  }, [theme])
 
   const toggleTheme = () => {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'))
@@ -41,12 +32,4 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       {children}
     </ThemeContext.Provider>
   )
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext)
-  if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider')
-  }
-  return context
 }
