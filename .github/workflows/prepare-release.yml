@@ -31,10 +31,10 @@ jobs:
 
       - name: Generate token for creating PR (GitHub App)
         id: generate-token
-        uses: tibdex/github-app-token@v2
+        uses: actions/create-github-app-token@v1
         with:
-          app_id: ${{ secrets.RELEASEBOT_APP_ID }}
-          private_key: ${{ secrets.RELEASEBOT_PRIVATE_KEY }}
+          app-id: ${{ secrets.RELEASEBOT_APP_ID }}
+          private-key: ${{ secrets.RELEASEBOT_PRIVATE_KEY }}
 
       - name: Ensure autorelease label exists
         run: |
@@ -56,7 +56,7 @@ jobs:
 
       - name: Create Pull Request
         id: create-release-pr
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: 'chore: Update changelog for release ${{ steps.update-changelog.outputs.version }}'
           committer: 'releasebot <noreply@github.com>'
