@@ -1,6 +1,7 @@
 # Faque Frontend Implementation Plan
 
 ## Technology Stack
+
 - **UI Framework**: React 19 + TypeScript
 - **Styling**: Tailwind CSS + shadcn/ui
 - **Data Fetching**: TanStack Query v5 (react-query)
@@ -8,10 +9,11 @@
 - **State Management**: React Context (theme) + Zustand (optional)
 - **Code Editing**: Prism or Monaco for JSON syntax highlighting
 - **Build**: Vite
-- **Environment**: `process.env.API_HTTPS || process.env.API_HTTP`
+- **Environment**: `process.env.FAQUE_HTTPS || process.env.FAQUE_HTTP`
 
 ## Project Structure
-```
+
+```text
 src/
 ├── api/
 │   ├── client.ts           # Axios/fetch client with base URL setup
@@ -60,7 +62,9 @@ src/
 ## Core Features & Page Layouts
 
 ### 1. Routes Management Page (Split Pane)
+
 **Left Pane:**
+
 - Filter controls: HTTP method dropdown, search box for path pattern
 - Routes list (table or card view)
 - "New Route" button (top)
@@ -69,11 +73,13 @@ src/
 - Clear all routes button (with confirmation)
 
 **Right Pane (when route selected):**
+
 - Route details view
 - Edit/Delete buttons (inline)
 - Live preview of response
 
 **Route Form (Modal or separate page):**
+
 - Method dropdown (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
 - Path pattern input with validation
 - Response status code input (100-599)
@@ -83,17 +89,21 @@ src/
 - Save/Cancel buttons
 
 ### 2. Request History Page
+
 **Top Section:**
+
 - Filter controls: method dropdown, path search, date range picker
 - Refresh button + auto-refresh indicator (30s)
 - Clear all requests button (with confirmation)
 
 **Main List:**
+
 - Timestamp, Method, Path, Query String, Body Excerpt
 - Click to view full details in right side panel
 - Sortable columns (by timestamp, method, path)
 
 **Right Side Panel (when request selected):**
+
 - Full request details: method, path, query, headers, body
 - Body rendered as formatted JSON if applicable
 - Copy-to-clipboard button for headers/body
@@ -116,12 +126,14 @@ useHealth()                   // Health check
 ```
 
 **Auto-polling Strategy:**
+
 - `useRoutes` and `useRequests` queries set `refetchInterval: 30000`
 - User-triggered refresh button uses `refetch()` for immediate update
 - Show "Last updated X seconds ago" indicator
 - Show loading state during refetch (subtle, non-blocking)
 
 **Polling params via nuqs:**
+
 ```typescript
 useQueryState('method', parseAsString)        // Routes filters
 useQueryState('pathSearch', parseAsString)
@@ -133,12 +145,14 @@ useQueryState('selectedRequestId', parseAsString)
 ## Theme System (Purple + Dark/Light Toggle)
 
 **Context Provider** with:
+
 - Current theme: 'light' | 'dark'
 - Primary color: purple (customizable shades)
 - Toggle function
 - Persist to localStorage
 
 **Color Palette:**
+
 - Purple accent: `#a855f7` (standard), `#c084fc` (hover)
 - Dark bg: `#0f172a`
 - Light bg: `#ffffff`
@@ -147,6 +161,7 @@ useQueryState('selectedRequestId', parseAsString)
 ## Testing & Accessibility
 
 **DOM IDs** (centralized in `lib/testIds.ts`):
+
 ```typescript
 // Routes page
 routes-page
@@ -192,6 +207,7 @@ confirm-dialog-cancel-button
 ```
 
 **Accessibility:**
+
 - All interactive elements have `aria-label` or visible labels
 - Color contrast ratios meet WCAG AA standard
 - Keyboard navigation support (Tab, Enter, Escape)
@@ -201,6 +217,7 @@ confirm-dialog-cancel-button
 ## Implementation Phases
 
 ### Phase 1: Foundation
+
 1. Setup Tailwind + shadcn/ui
 2. Install dependencies (TanStack Query, nuqs, Zustand, JSON editor)
 3. Generate shadcn/ui components: Button, Input, Card, Dialog, Table, Select, Badge, Tabs, Pagination
@@ -208,36 +225,40 @@ confirm-dialog-cancel-button
 5. Setup API client + base URL configuration
 
 ### Phase 2: Routes Management
+
 6. Create API hooks with TanStack Query
-7. Build RoutesList (left pane) with filters
-8. Build RouteDetails (right pane)
-9. Build RouteForm (modal/page)
-10. Implement split-pane layout
-11. Wire up CRUD operations
+2. Build RoutesList (left pane) with filters
+3. Build RouteDetails (right pane)
+4. Build RouteForm (modal/page)
+5. Implement split-pane layout
+6. Wire up CRUD operations
 
 ### Phase 3: Request History
+
 12. Build RequestsList with filters + search
-13. Build RequestDetails panel
-14. Implement auto-polling for both pages
-15. Add request body formatting (JSON viewer)
+2. Build RequestDetails panel
+3. Implement auto-polling for both pages
+4. Add request body formatting (JSON viewer)
 
 ### Phase 4: Polish & UX
+
 16. Add confirmation dialogs (delete, clear all)
-17. Error handling + error boundaries
-18. Loading states + skeleton loaders
-19. Refresh indicators + last-updated timestamps
-20. Multi-select deletion for routes
-21. Keyboard shortcuts (optional)
+2. Error handling + error boundaries
+3. Loading states + skeleton loaders
+4. Refresh indicators + last-updated timestamps
+5. Multi-select deletion for routes
+6. Keyboard shortcuts (optional)
 
 ### Phase 5: Testing & Deployment
+
 22. Add all test IDs
-23. Verify accessibility compliance
-24. Desktop-only responsive design
-25. Build static assets for container
+2. Verify accessibility compliance
+3. Desktop-only responsive design
+4. Build static assets for container
 
 ## Key Implementation Notes
 
-1. **API Base URL**: Read from `process.env.API_HTTPS || process.env.API_HTTP` at runtime
+1. **API Base URL**: Read from `process.env.FAQUE_HTTPS || process.env.FAQUE_HTTP` at runtime
 2. **CORS**: Backend may need CORS headers; frontend should handle gracefully
 3. **Error Handling**: Use shadcn/ui Alert component, show RFC 9457 error details
 4. **JSON Editor**: Use Prism or Monaco for syntax highlighting with copy/format buttons

@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
       proxy: {
         // Proxy API calls to the app service
         "/$$": {
-          target: env.API_HTTPS || env.API_HTTP,
+          target: env.FAQUE_HTTPS || env.FAQUE_HTTP,
           changeOrigin: true,
           // rewrite: (path) => path.replace(/^\/api/, ''),
         },

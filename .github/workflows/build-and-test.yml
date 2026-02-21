@@ -1,5 +1,10 @@
 name: Build and test
 
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+
 on:
   workflow_call:
     inputs:
@@ -80,11 +85,8 @@ jobs:
         id: prepare_container
         run: |
           curl -sSL https://aspire.dev/install.sh | bash
-          echo "$HOME/.aspire/bin" >> $GITHUB_PATH
           echo "${HOME}/.aspire/bin" >> $GITHUB_PATH
           echo "ASPIRE_PATH=$HOME/.aspire/bin" >> $GITHUB_ENV
-        env:
-          PATH: ${{ env.PATH }}:$HOME/.aspire/bin
 
       - name: Prepare compose and build container
         if: ${{ inputs.create-container == true }}
@@ -93,32 +95,16 @@ jobs:
           export PATH="$HOME/.aspire/bin:$PATH"
           cd src/Faque.AppHost
           aspire do prepare-compose --environment production
-          COMPOSE_FILE=$(find "$GITHUB_WORKSPACE/src/Faque.AppHost" -name 'docker-compose*.yml' 2>/dev/null | head -1)
-          if [[ -z "$COMPOSE_FILE" ]]; then
-            COMPOSE_FILE="$GITHUB_WORKSPACE/src/Faque.AppHost/aspire-output/docker-compose.yml"
-          fi
-          COMPOSE_DIR=$(dirname "$COMPOSE_FILE")
-          echo "compose-dir=$COMPOSE_DIR" >> $GITHUB_OUTPUT
-          echo "compose-file=$COMPOSE_FILE" >> $GITHUB_OUTPUT
-          docker compose -f "$COMPOSE_FILE" build
-        env:
-          PATH: ${{ env.PATH }}:$HOME/.aspire/bin
+          docker image ls --format "{{.Repository}}:{{.Tag}}" --filter "dangling=false"
 
-      - name: Tag and push container to GHCR
+      - name: Tag container
         if: ${{ inputs.create-container == true }}
-        id: push_container
+        id: tag_container
         run: |
-          COMPOSE_FILE='${{ steps.build_container.outputs.compose-file }}'
-          # Get the api service image name from compose (built image has this name)
-          IMAGE_NAME=$(docker compose -f "$COMPOSE_FILE" config 2>/dev/null | grep -A 20 "api:" | grep "image:" | head -1 | sed 's/.*image: *//' | tr -d ' "')
+          IMAGE_NAME=$(docker images faque --format "{{.Repository}}:{{.Tag}}" --filter "dangling=false" | head -1)
           if [[ -z "$IMAGE_NAME" ]]; then
-            IMAGE_NAME=$(grep -E '^  api:' -A 50 "$COMPOSE_FILE" | grep 'image:' | head -1 | sed 's/.*image: *//' | tr -d ' "')
-          fi
-          if [[ -z "$IMAGE_NAME" ]]; then
-            IMAGE_NAME=$(docker compose -f "$COMPOSE_FILE" images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | head -1)
-          fi
-          if [[ -z "$IMAGE_NAME" ]]; then
-            IMAGE_NAME=$(docker images --format "{{.Repository}}:{{.Tag}}" --filter "dangling=false" | head -1)
+            echo "No image found to tag"
+            exit 1
           fi
           GHCR_IMAGE="ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ env.BUILD_VERSION }}"
           docker tag "$IMAGE_NAME" "$GHCR_IMAGE"
@@ -126,7 +112,7 @@ jobs:
         env:
           BUILD_VERSION: ${{ env.BUILD_VERSION }}
 
-      - name: Log in to GHCR and push
+      - name: Log in to GHCR
         if: ${{ inputs.create-container == true }}
         uses: docker/login-action@v3
         with:
@@ -137,7 +123,7 @@ jobs:
       - name: Push container image to GHCR
         if: ${{ inputs.create-container == true }}
         run: |
-          docker push ${{ steps.push_container.outputs.image }}
+          docker push ${{ steps.tag_container.outputs.image }}
         env:
           BUILD_VERSION: ${{ env.BUILD_VERSION }}
 

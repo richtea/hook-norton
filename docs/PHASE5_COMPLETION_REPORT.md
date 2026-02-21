@@ -326,13 +326,13 @@ Successfully verified all frontend-backend integration:
 4. **Configure API Base URL**
    ```bash
    # Frontend reads from environment at runtime
-   export API_HTTPS=https://api.example.com:8080
+   export FAQUE_HTTPS=https://api.example.com:8080
    # OR
-   export API_HTTP=http://localhost:8080
+   export FAQUE_HTTP=http://localhost:8080
    ```
 
 ### Production Checklist
-- [ ] Environment variables set (API_HTTPS or API_HTTP)
+- [ ] Environment variables set (FAQUE_HTTPS or FAQUE_HTTP)
 - [ ] HTTPS enabled (recommended for production)
 - [ ] CORS headers configured on backend
 - [ ] Cache-busting headers set (served by web server)
