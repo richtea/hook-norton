@@ -35,6 +35,8 @@ jobs:
         with:
           app-id: ${{ secrets.RELEASEBOT_APP_ID }}
           private-key: ${{ secrets.RELEASEBOT_PRIVATE_KEY }}
+          permission-pull-requests: write
+          permission-contents: write
 
       - name: Ensure autorelease label exists
         run: |
@@ -45,6 +47,8 @@ jobs:
           else
             echo "'autorelease' label exists"
           fi
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Update changelog
         id: update-changelog
