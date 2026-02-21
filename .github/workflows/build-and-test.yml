@@ -101,7 +101,7 @@ jobs:
         if: ${{ inputs.create-container == true }}
         id: tag_container
         run: |
-          IMAGE_NAME=$(docker images faque--format "{{.Repository}}:{{.Tag}}" --filter "dangling=false" | head -1)
+          IMAGE_NAME=$(docker images faque --format "{{.Repository}}:{{.Tag}}" --filter "dangling=false" | head -1)
           if [[ -z "$IMAGE_NAME" ]]; then
             echo "No image found to tag"
             exit 1
